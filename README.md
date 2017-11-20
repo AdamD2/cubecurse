@@ -12,7 +12,8 @@ Features
 
 * Title bar with version number
 * Basic 3x3x3 scramble under the title bar
-* Timer (not accurate)
+* Timer (not accurate) which times at 3dp and outputs the times to the history
+  window with 2dp precision
 
 Planned Features
 ----------------
@@ -23,7 +24,7 @@ Planned Features
   keys or vim keybindings and allows application of options to the time such
   as DNF, +2, delete or leave comment
 * Save all times as a .json file with time, scramble and comments
-* Timer in the middle of the screen with 2 or 3 decimal place precision
+* Accurate timer in the middle of the screen
 * Stats on the right side of the screen for best times, averages, number of
   times, current times and session average (feel free to suggest other stats)
 

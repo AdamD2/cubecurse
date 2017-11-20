@@ -57,6 +57,8 @@ int main(int argc, char* argv[]) {
 
     // Time data setup
     Time_list time_data = time_data_setup();
+    Time_list pbs[4];
+    pb_setup(pbs);
 
     // Initial printing
     add_boxes();
@@ -88,6 +90,10 @@ Time_list time_data_setup() {
     return l;
 }
 
+/*
+ * Compare the length of the time list with the height of the screen and call
+ * the relevant function from Time_list.h
+ */
 void print_time_data(WINDOW* history, Time_list time_data, int y) {
     int l = tl_length(time_data);
 
@@ -97,6 +103,37 @@ void print_time_data(WINDOW* history, Time_list time_data, int y) {
         print_up(history, time_data, tl_length(time_data));
     } else {
         print_down(history, time_data, y-2);
+    }
+}
+
+/*
+ * Load in previous pbs or create empty lists for them
+ */
+void pb_setup(Time_list pbs[]) {
+    pbs[BEST] = new_list();
+    pbs[AO5] = new_list();
+    pbs[AO12] = new_list();
+    pbs[AO100] = new_list();
+
+    // TODO load from file
+}
+
+/*
+ * Calculate stats and display them on the right window
+ */
+void calculate_stats(WINDOW* stats, Time_list time_data, Time_list pbs[]) {
+    int len = tl_length(time_data);
+    if (len >= 1) {
+        calculate_best(time_data, pbs[BEST]);
+        if (len >= 5) {
+            calculate_ao5(time_data, pbs[AO5]);
+            if (len >= 12) {
+                calculate_ao12(time_data, pbs[AO12]);
+                if (len >= 100) {
+                    calculate_ao100(time_data, pbs[AO100]);
+                }
+            }
+        }
     }
 }
 

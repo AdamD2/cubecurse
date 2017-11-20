@@ -91,6 +91,18 @@ void append(Time_list l, Time t) {
     l->length++;
 }
 
+int contains(Time_list l, Time t) {
+    Time cur = l->head;
+    while (cur != NULL) {
+        // Only need to check the scramble, since it is almost certainly unique
+        if (strcmp(t->scramble, cur->scramble) == 0) {
+            return TRUE;
+        }
+
+        cur = cur->next;
+    }
+}
+
 int tl_length(Time_list l) {
     return l->length;
 }
@@ -174,5 +186,39 @@ void print_down(WINDOW* w, Time_list l, int num) {
         }
 
         cur = cur->prev;
+    }
+}
+
+void calculate_ao100(Time_list l, Time_list ao100) {
+}
+
+void calculate_ao12(Time_list l, Time_list ao12) {
+}
+
+void calculate_ao5(Time_list l, Time_list ao5) {
+}
+
+void calculate_best(Time_list l, Time_list best) {
+    Time cur = l->tail;
+
+    if (best->length == 0) {
+        char scramble[60];
+        memcpy((void*)scramble, (void*)cur->scramble, 60);
+        char comment[100];
+        memcpy((void*)comment, (void*)cur->comment, 100);
+        Time t = create_time_all(scramble, cur->ms, cur->plus_two, 
+                             cur->dnf, comment);
+        append(best, t);
+    } else {
+        Time t = best->head;
+        if (cur->ms < t->ms) {
+            free(t->scramble);
+            memcpy((void*)t->scramble, (void*)cur->scramble, 60);
+            t->ms = cur->ms;
+            t->plus_two = cur->plus_two;
+            t->dnf = cur->dnf;
+            free(t->comment);
+            memcpy((void*)t->comment, (void*)cur->comment, 100);
+        }
     }
 }

@@ -15,13 +15,20 @@
 #include "Time_list.h"
 
 // Definitions
+// Color
 #define BACKGROUND COLOR_BLACK
+// Windows
 #define TITLE 0
 #define SCRAMBLE 1
 #define HISTORY 2 
 #define TIMER 3
 #define STATS 4
 #define CONTROLS 5
+// Pbs
+#define BEST 0
+#define AO5 1
+#define AO12 2
+#define AO100 3
 
 // Macros
 #define clear_windows() wclear(stdscr);\
@@ -65,6 +72,8 @@ Space - Start/Stop Timer  Up/Down or k/j - Navigate Times  d - Delete\
 // Functions
 Time_list time_data_setup();
 void print_time_data(WINDOW* history, Time_list time_data, int y);
+void pb_setup(Time_list pbs[]);
+void calculate_stats(WINDOW* stats, Time_list time_data, Time_list pbs[]);
 void generate_scramble(char current_scramble[]);
 void main_loop(int x_res[], int y_res[], int x_pos[], int y_pos[],
                WINDOW* title, WINDOW* scramble, WINDOW* history, WINDOW* timer,

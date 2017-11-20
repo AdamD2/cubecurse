@@ -16,6 +16,9 @@ Time create_time_all(char scramble[], int ms, int plus_two, int dnf, char* comme
 // Append a node to the list
 void append(Time_list l, Time t);
 
+// Check if a specific solve is in the list
+int  contains(Time_list l, Time t);
+
 // Get the length of the list
 int  tl_length(Time_list l);
 
@@ -45,3 +48,9 @@ void print_up(WINDOW* w, Time_list l, int index);
 
 // Print to the given window down to a given index
 void print_down(WINDOW* w, Time_list l, int index);
+
+// Calculate stats
+void calculate_ao100(Time_list l, Time_list ao100);
+void calculate_ao12(Time_list l, Time_list ao12);
+void calculate_ao5(Time_list l, Time_list ao5);
+void calculate_best(Time_list l, Time_list best);
