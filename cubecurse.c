@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
 
     // Main loop
     main_loop(x_res, y_res, x_pos, y_pos, title, scramble, history, timer,
-              stats, controls, time_data, current_scramble);
+              stats, controls, time_data, pbs, current_scramble);
 
     // Finish
     delete_windows();
@@ -119,22 +119,45 @@ void pb_setup(Time_list pbs[]) {
 }
 
 /*
- * Calculate stats and display them on the right window
+ * Update stats based on the most recent recorded time and display them in the
+ * stats window
  */
 void calculate_stats(WINDOW* stats, Time_list time_data, Time_list pbs[]) {
     int len = tl_length(time_data);
+
     if (len >= 1) {
-        calculate_best(time_data, pbs[BEST]);
+        calculate_best(get_tail(time_data), pbs[BEST]);
+        print_up(stats, pbs[BEST], tl_length(pbs[BEST]));
         if (len >= 5) {
-            calculate_ao5(time_data, pbs[AO5]);
+            calculate_ao5(get_tail(time_data), pbs[AO5]);
             if (len >= 12) {
-                calculate_ao12(time_data, pbs[AO12]);
+                calculate_ao12(get_tail(time_data), pbs[AO12]);
                 if (len >= 100) {
-                    calculate_ao100(time_data, pbs[AO100]);
+                    calculate_ao100(get_tail(time_data), pbs[AO100]);
                 }
             }
         }
     }
+}
+
+/*
+ * Update stats based on all recorded times and display them in the stats window
+ */
+void calculate_stats_all(WINDOW* stats, Time_list time_data, Time_list pbs[]) {
+    int len = tl_length(time_data);
+
+    if (len >= 1) {
+        calculate_best_all(time_data, pbs[BEST]);
+        if (len >= 5) {
+            calculate_ao5_all(time_data, pbs[AO5]);
+            if (len >= 12) {
+                calculate_ao12_all(time_data, pbs[AO12]);
+                if (len >= 100) {
+                    calculate_ao100_all(time_data, pbs[AO100]);
+                }
+            }
+        }
+    }   
 }
 
 /*
@@ -165,7 +188,7 @@ void generate_scramble(char current_scramble[]) {
 void main_loop(int x_res[], int y_res[], int x_pos[], int y_pos[],
                WINDOW* title, WINDOW* scramble, WINDOW* history, WINDOW* timer,
                WINDOW* stats, WINDOW* controls, Time_list time_data,
-               char current_scramble[]) {
+               Time_list pbs[], char current_scramble[]) {
     // Resizing variables
     int parent_y, parent_x, new_y, new_x;
     getmaxyx(stdscr, parent_y, parent_x);
@@ -198,6 +221,7 @@ void main_loop(int x_res[], int y_res[], int x_pos[], int y_pos[],
         } else if (c == ' ' && timing == TRUE) {
             timing = stop_timer(current_scramble, scramble, history, time_data,
                                 msec, y_res[HISTORY]);
+            calculate_stats(stats, time_data, pbs);
         } else if (c == 'f') {
             change_dnf(time_data);
             print_time_data(history, time_data, y_res[HISTORY]);

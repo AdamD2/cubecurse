@@ -74,11 +74,12 @@ Time_list time_data_setup();
 void print_time_data(WINDOW* history, Time_list time_data, int y);
 void pb_setup(Time_list pbs[]);
 void calculate_stats(WINDOW* stats, Time_list time_data, Time_list pbs[]);
+void calculate_stats_all(WINDOW* stats, Time_list time_data, Time_list pbs[]);
 void generate_scramble(char current_scramble[]);
 void main_loop(int x_res[], int y_res[], int x_pos[], int y_pos[],
                WINDOW* title, WINDOW* scramble, WINDOW* history, WINDOW* timer,
                WINDOW* stats, WINDOW* controls, Time_list time_data,
-               char current_scramble[]);
+               Time_list pbs[], char current_scramble[]);
 void resize(int new_x, int new_y, int x_res[], int y_res[], int x_pos[], 
             int y_pos[], WINDOW* title, WINDOW* scramble, WINDOW* history,
             WINDOW* timer, WINDOW* stats, WINDOW* controls, char cur_scram[]);

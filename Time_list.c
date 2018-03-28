@@ -68,7 +68,11 @@ Time create_time_all(char scramble[], int ms, int plus_two, int dnf, char* comme
     t->ms = ms;
     t->plus_two = plus_two;
     t->dnf = dnf;
-    t->comment = comment;
+    if (comment != NULL) {
+        memcpy((void *)t->comment, (void *)comment, 100);
+    } else {
+        t->comment = NULL;
+    }
     t->prev = t->next = NULL;
 
     return t;
@@ -110,6 +114,14 @@ int tl_length(Time_list l) {
 Time get_time(Time_list l, int index) {
     // TODO
     return NULL;
+}
+
+Time get_head(Time_list l) {
+    return l->head;
+}
+
+Time get_tail(Time_list l) {
+    return l->tail;
 }
 
 Time delete_time(Time_list l, int index) {
@@ -158,10 +170,13 @@ void change_dnf_at(Time_list l, int index) {
 }
 
 void print_up(WINDOW* w, Time_list l, int num) {
+    assert(num <= l->length);
     Time cur = l->head;
     float time;
+
     for (int y = 1; y <= num; y++) {
-         time = ((float)(cur->ms))/1000;
+        time = ((float)(cur->ms))/1000;
+
         if (cur->dnf) {
             mvwprintw(w, y, 2, "DNF  ");
         } else if (cur->plus_two) {
@@ -175,50 +190,95 @@ void print_up(WINDOW* w, Time_list l, int num) {
 }
 
 void print_down(WINDOW* w, Time_list l, int num) {
+    assert(num <= l->length);
     Time cur = l->tail;
+    float time;
+
     for (int y = num; y > 0; y--) {
+        time = ((float)(cur->ms))/1000;
+
         if (cur->dnf) {
-            mvwprintw(w, y, 1, "DNF");
+            mvwprintw(w, y, 2, "DNF  ");
         } else if (cur->plus_two) {
-            mvwprintw(w, y, 2, "%d.%d+", (cur->ms/1000)+2, cur->ms%1000);
+            mvwprintw(w, y, 2, "%.2f+", time+2);
         } else {
-            mvwprintw(w, y, 2, "%d.%d", cur->ms/1000, cur->ms%1000);
+            mvwprintw(w, y, 2, "%.2f", time);
         }
 
         cur = cur->prev;
     }
 }
 
-void calculate_ao100(Time_list l, Time_list ao100) {
+void calculate_ao100(Time t, Time_list ao100) {
 }
 
-void calculate_ao12(Time_list l, Time_list ao12) {
+void calculate_ao12(Time t, Time_list ao12) {
 }
 
-void calculate_ao5(Time_list l, Time_list ao5) {
+void calculate_ao5(Time t, Time_list ao5) {
 }
 
-void calculate_best(Time_list l, Time_list best) {
-    Time cur = l->tail;
+void calculate_best(Time t, Time_list best) {
+    char *comment = NULL;
 
     if (best->length == 0) {
         char scramble[60];
-        memcpy((void*)scramble, (void*)cur->scramble, 60);
-        char comment[100];
-        memcpy((void*)comment, (void*)cur->comment, 100);
-        Time t = create_time_all(scramble, cur->ms, cur->plus_two, 
-                             cur->dnf, comment);
-        append(best, t);
-    } else {
-        Time t = best->head;
-        if (cur->ms < t->ms) {
-            free(t->scramble);
-            memcpy((void*)t->scramble, (void*)cur->scramble, 60);
-            t->ms = cur->ms;
-            t->plus_two = cur->plus_two;
-            t->dnf = cur->dnf;
-            free(t->comment);
-            memcpy((void*)t->comment, (void*)cur->comment, 100);
+        memcpy((void*)scramble, (void*)t->scramble, 60);
+        if (t->comment != NULL) {
+            char comment[100];
+            memcpy((void*)comment, (void*)t->comment, 100);
         }
+        Time new = create_time_all(scramble, t->ms, t->plus_two, 
+                                   t->dnf, comment);
+        append(best, new);
+    } else {
+        Time old = best->head;
+
+        if (t->ms < old->ms) {
+            free(old->scramble);
+            memcpy((void*)old->scramble, (void*)t->scramble, 60);
+            old->ms = t->ms;
+            old->plus_two = t->plus_two;
+            old->dnf = t->dnf;
+            if (t->comment != NULL) {
+                memcpy((void*)old->comment, (void*)t->comment, 100);
+            }
+        }
+    }
+}
+
+void calculate_ao100_all(Time_list l, Time_list ao100){
+    Time cur = l->head;
+
+    while (cur != NULL) {
+        calculate_ao100(cur, ao100);
+        cur = cur->next;
+    }
+}
+
+void calculate_ao12_all(Time_list l, Time_list ao12){
+    Time cur = l->head;
+
+    while (cur != NULL) {
+        calculate_ao12(cur, ao12);
+        cur = cur->next;
+    }
+}
+
+void calculate_ao5_all(Time_list l, Time_list ao5){
+    Time cur = l->head;
+
+    while (cur != NULL) {
+        calculate_ao5(cur, ao5);
+        cur = cur->next;
+    }
+}
+
+void calculate_best_all(Time_list l, Time_list best) {
+    Time cur = l->head;
+
+    while (cur != NULL) {
+        calculate_best(cur, best);
+        cur = cur->next;
     }
 }

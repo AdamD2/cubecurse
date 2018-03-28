@@ -24,6 +24,10 @@ int  tl_length(Time_list l);
 
 // Get a node from a specific point in the list
 Time get_time(Time_list l, int index);
+// Get the first node of the list
+Time get_head(Time_list l);
+// Get the last node of the list
+Time get_tail(Time_list l);
 
 // Delete a node at a specific point in the list
 Time delete_time(Time_list l, int index);
@@ -49,8 +53,19 @@ void print_up(WINDOW* w, Time_list l, int index);
 // Print to the given window down to a given index
 void print_down(WINDOW* w, Time_list l, int index);
 
-// Calculate stats
-void calculate_ao100(Time_list l, Time_list ao100);
-void calculate_ao12(Time_list l, Time_list ao12);
-void calculate_ao5(Time_list l, Time_list ao5);
-void calculate_best(Time_list l, Time_list best);
+// Update stats based on the most recent recorded time
+// Assumes that there are enough times to test against for each category
+void calculate_ao100(Time t, Time_list ao100);
+void calculate_ao12(Time t, Time_list ao12);
+void calculate_ao5(Time t, Time_list ao5);
+void calculate_best(Time t, Time_list best);
+
+// Update stats based on all recorded times, for example after a time is 
+// deleted 
+// Assumes that there are enough times to test against for each category
+void calculate_ao100_all(Time_list l, Time_list ao100);
+void calculate_ao12_all(Time_list l, Time_list ao12);
+void calculate_ao5_all(Time_list l, Time_list ao5);
+void calculate_best_all(Time_list l, Time_list best);
+
+
