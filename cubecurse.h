@@ -85,5 +85,5 @@ void resize(int new_x, int new_y, int x_res[], int y_res[], int x_pos[],
             WINDOW* timer, WINDOW* stats, WINDOW* controls, char cur_scram[]);
 int stop_timer(char current_scramble[], WINDOW* scramble, WINDOW* history,
                Time_list time_data, int msec, int y);
-int update_timer(clock_t start);
+int update_timer(struct timespec start);
 

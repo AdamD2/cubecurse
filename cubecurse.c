@@ -195,7 +195,7 @@ void main_loop(int x_res[], int y_res[], int x_pos[], int y_pos[],
 
     // Timing variables
     int timing = FALSE;
-    clock_t start;
+    struct timespec start;
     int msec = 0;
 
     while (TRUE) {
@@ -217,7 +217,7 @@ void main_loop(int x_res[], int y_res[], int x_pos[], int y_pos[],
             break;
         } else if (c == ' ' && timing == FALSE) {
             timing = TRUE;
-            start = clock();
+            clock_gettime(CLOCK_REALTIME, &start);
         } else if (c == ' ' && timing == TRUE) {
             timing = stop_timer(current_scramble, scramble, history, time_data,
                                 msec, y_res[HISTORY]);
@@ -295,6 +295,11 @@ int stop_timer(char current_scramble[], WINDOW* scramble, WINDOW* history,
  * Pre: start time is set
  * Post: msec is set
  */
-int update_timer(clock_t start) {
-    return (clock() - start)*1000/CLOCKS_PER_SEC;
+int update_timer(struct timespec start) {
+    struct timespec end;
+    clock_gettime(CLOCK_REALTIME, &end);
+
+    int ms = (end.tv_sec - start.tv_sec)*1000 // Seconds
+             + (end.tv_nsec - start.tv_nsec)/1000000; // Nanoseconds
+    return ms;
 }
