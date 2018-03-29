@@ -264,7 +264,10 @@ void calculate_best(Time t, Time_list best) {
     } else {
         Time old = best->head;
 
-        if (t->ms < old->ms) {
+        if (old->dnf == 1 && t->dnf == 0) {
+            copy_time(t, old);
+        } else if (t->dnf == 0 && t->ms+2000*t->plus_two < 
+                   old->ms+2*old->plus_two) {
             copy_time(t, old);
         }
     }
@@ -309,6 +312,10 @@ void calculate_ao5_all(Time_list l, Time_list ao5){
 void calculate_best_all(Time_list l, Time_list best) {
     Time cur = l->head;
 
+    //delete_time(l, 0);
+    // Workaround until delete is written
+    destroy(best);
+    best = new_list();
     while (cur != NULL) {
         calculate_best(cur, best);
         cur = cur->next;

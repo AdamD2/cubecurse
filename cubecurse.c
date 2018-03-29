@@ -107,6 +107,16 @@ void print_time_data(WINDOW* history, Time_list time_data, int y) {
 }
 
 /*
+ * Print the stats 
+ */
+void print_stats(WINDOW* stats, Time_list pbs[]) {
+    // Print best time
+    print_up(stats, pbs[BEST], tl_length(pbs[BEST]));
+
+    // TODO print everything else
+}
+
+/*
  * Load in previous pbs or create empty lists for them
  */
 void pb_setup(Time_list pbs[]) {
@@ -127,7 +137,6 @@ void calculate_stats(WINDOW* stats, Time_list time_data, Time_list pbs[]) {
 
     if (len >= 1) {
         calculate_best(get_tail(time_data), pbs[BEST]);
-        print_up(stats, pbs[BEST], tl_length(pbs[BEST]));
         if (len >= 5) {
             calculate_ao5(get_tail(time_data), pbs[AO5]);
             if (len >= 12) {
@@ -222,12 +231,17 @@ void main_loop(int x_res[], int y_res[], int x_pos[], int y_pos[],
             timing = stop_timer(current_scramble, scramble, history, time_data,
                                 msec, y_res[HISTORY]);
             calculate_stats(stats, time_data, pbs);
+            print_stats(stats, pbs);
         } else if (c == 'f') {
             change_dnf(time_data);
             print_time_data(history, time_data, y_res[HISTORY]);
+            calculate_best_all(time_data, pbs[BEST]);
+            print_stats(stats, pbs);
         } else if (c == '+') {
             change_plus_two(time_data);
             print_time_data(history, time_data, y_res[HISTORY]);
+            calculate_best_all(time_data, pbs[BEST]);
+            print_stats(stats, pbs);
         }
 
         if (timing) msec = update_timer(start);

@@ -72,6 +72,7 @@ Space - Start/Stop Timer  Up/Down or k/j - Navigate Times  d - Delete\
 // Functions
 Time_list time_data_setup();
 void print_time_data(WINDOW* history, Time_list time_data, int y);
+void print_stats(WINDOW* stats, Time_list pbs[]);
 void pb_setup(Time_list pbs[]);
 void calculate_stats(WINDOW* stats, Time_list time_data, Time_list pbs[]);
 void calculate_stats_all(WINDOW* stats, Time_list time_data, Time_list pbs[]);
