@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
     mvwprintw(title, 1, title_spacing, title_string);
     generate_scramble(current_scramble);
     mvwprintw(scramble, 1, 2, "Scramble: %s", current_scramble);
-    mvwprintw(controls, 1, 2, "%s", controls_string);
+    mvwprintw(controls, 1, 2, "%s", controls_string); // TODO use curses lib
     print_time_data(history, time_data, y_res[HISTORY]);
     refresh_windows();
 

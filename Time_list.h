@@ -68,4 +68,3 @@ void calculate_ao12_all(Time_list l, Time_list ao12);
 void calculate_ao5_all(Time_list l, Time_list ao5);
 void calculate_best_all(Time_list l, Time_list best);
 
-

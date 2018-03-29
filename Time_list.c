@@ -5,6 +5,9 @@
 #include <assert.h>
 #include "Time_list.h"
 
+// Local functions
+void copy_time(Time source, Time dest);
+
 // Structs
 typedef struct _time_list {
     Time head;
@@ -60,7 +63,8 @@ Time create_time(char scramble[], int ms) {
     return t;
 }
 
-Time create_time_all(char scramble[], int ms, int plus_two, int dnf, char* comment) {
+Time create_time_all(char scramble[], int ms, int plus_two, int dnf, 
+                     char* comment) {
     Time t = malloc(sizeof(time));
     assert(t != NULL);
 
@@ -162,11 +166,33 @@ void change_dnf(Time_list l) {
 }
 
 void change_plus_two_at(Time_list l, int index) {
-    // TODO implement
+    assert(index <= l->length);
+    Time cur = l->head;
+
+    for (int y = 1; y <= index; y++) {
+        cur = cur->next;
+    }
+    
+    if (cur->plus_two == 0) {
+        cur->plus_two = 1;
+    } else {
+        cur->plus_two = 0;
+    }
 }
 
 void change_dnf_at(Time_list l, int index) {
-    // TODO implement
+    assert(index <= l->length);
+    Time cur = l->head;
+
+    for (int y = 1; y <= index; y++) {
+        cur = cur->next;
+    }
+    
+    if (cur->dnf == 0) {
+        cur->dnf = 1;
+    } else {
+        cur->dnf = 0;
+    }
 }
 
 void print_up(WINDOW* w, Time_list l, int num) {
@@ -216,39 +242,39 @@ void calculate_ao12(Time t, Time_list ao12) {
 }
 
 void calculate_ao5(Time t, Time_list ao5) {
+    Time new;
+
+    if (ao5->length == 0) {
+        for (int i = 0; i < 5; i++) {
+            new = create_time_all(t->scramble, t->ms, t->plus_two, t->dnf,
+                                  t->comment);
+            append(ao5, new);
+            t = t->prev;
+        }
+    } else {
+        // TODO calculate ao5 for original and new and compare
+    }
 }
 
 void calculate_best(Time t, Time_list best) {
-    char *comment = NULL;
-
     if (best->length == 0) {
-        char scramble[60];
-        memcpy((void*)scramble, (void*)t->scramble, 60);
-        if (t->comment != NULL) {
-            char comment[100];
-            memcpy((void*)comment, (void*)t->comment, 100);
-        }
-        Time new = create_time_all(scramble, t->ms, t->plus_two, 
-                                   t->dnf, comment);
+        Time new = create_time_all(t->scramble, t->ms, t->plus_two, 
+                                   t->dnf, t->comment);
         append(best, new);
     } else {
         Time old = best->head;
 
         if (t->ms < old->ms) {
-            free(old->scramble);
-            memcpy((void*)old->scramble, (void*)t->scramble, 60);
-            old->ms = t->ms;
-            old->plus_two = t->plus_two;
-            old->dnf = t->dnf;
-            if (t->comment != NULL) {
-                memcpy((void*)old->comment, (void*)t->comment, 100);
-            }
+            copy_time(t, old);
         }
     }
 }
 
 void calculate_ao100_all(Time_list l, Time_list ao100){
     Time cur = l->head;
+    for (int i = 0; i < 99; i++) {
+        cur = cur->next;
+    }
 
     while (cur != NULL) {
         calculate_ao100(cur, ao100);
@@ -258,6 +284,9 @@ void calculate_ao100_all(Time_list l, Time_list ao100){
 
 void calculate_ao12_all(Time_list l, Time_list ao12){
     Time cur = l->head;
+    for (int i = 0; i < 11; i++) {
+        cur = cur->next;
+    }
 
     while (cur != NULL) {
         calculate_ao12(cur, ao12);
@@ -267,6 +296,9 @@ void calculate_ao12_all(Time_list l, Time_list ao12){
 
 void calculate_ao5_all(Time_list l, Time_list ao5){
     Time cur = l->head;
+    for (int i = 0; i < 4; i++) {
+        cur = cur->next;
+    }
 
     while (cur != NULL) {
         calculate_ao5(cur, ao5);
@@ -280,5 +312,21 @@ void calculate_best_all(Time_list l, Time_list best) {
     while (cur != NULL) {
         calculate_best(cur, best);
         cur = cur->next;
+    }
+}
+
+/*
+ * Copy a single time from one node to another
+ */
+void copy_time(Time source, Time dest) {
+    memcpy((void*)dest->scramble, (void*)source->scramble, 60);
+    dest->ms = source->ms;
+    dest->plus_two = source->plus_two;
+    dest->dnf = source->dnf;
+    if (source->comment != NULL) {
+        memcpy((void*)dest->comment, (void*)source->comment, 100);
+    } else {
+        free(dest->comment);
+        dest->comment = NULL;
     }
 }
