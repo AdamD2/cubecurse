@@ -242,7 +242,7 @@ void calculate_ao12(Time t, Time_list ao12) {
 }
 
 void calculate_ao5(Time t, Time_list ao5) {
-    Time new;
+/*    Time new;
 
     if (ao5->length == 0) {
         for (int i = 0; i < 5; i++) {
@@ -253,7 +253,7 @@ void calculate_ao5(Time t, Time_list ao5) {
         }
     } else {
         // TODO calculate ao5 for original and new and compare
-    }
+    }*/
 }
 
 void calculate_best(Time t, Time_list best) {
