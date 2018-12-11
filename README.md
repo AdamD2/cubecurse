@@ -5,12 +5,11 @@ Overview
 --------
 
 Cubecurse is a simple ncurses based timer developed for timing Rubik's Cube
-speedsolves. It is licensed under the GPL v2.
+solves. It is licensed under the GPL v2.
 
 Features
 --------
 
-* Title bar with version number
 * Basic 3x3x3 scramble under the title bar
 * Accurate timer which times to three decimal places and outputs the times to
   the history window with two decimal place precision
