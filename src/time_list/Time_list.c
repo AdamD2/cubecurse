@@ -1,4 +1,4 @@
-// Implements all functions declared in list.h
+// Implements all functions declared in Time_list.h
 
 #include <stdlib.h>
 #include <curses.h>
@@ -6,20 +6,34 @@
 #include "Time_list.h"
 
 // Local functions
+void f_update_fast(F_Time_list l);
+void f_update_slow(F_Time_list l);
 void copy_time(Time source, Time dest);
+void f_copy_list(F_Time_list source, F_Time_list dest);
 
 // Structs
 typedef struct _time_list {
     Time head;
     Time tail;
-    int  length;
+    unsigned int  length;
 } time_list;
 
+typedef struct _f_time_list {
+	// Fixed time list
+	Time head;
+	Time tail;
+	Time fast;	// Fastest time
+	Time slow;  // Slowest time
+	unsigned int length; 
+	unsigned int max;	 // Max number of times
+	unsigned int sum;	 // Sum of times
+} f_time_list;
+
 typedef struct _time {
-    char  scramble[60];
-    int   ms;
-    int   plus_two;
-    int   dnf;
+    char  scramble[SCRAMBLE_LENGTH];
+    unsigned int   ms;
+    unsigned int   plus_two;
+    unsigned int   dnf;
     char* comment;
     Time  prev;
     Time  next;
@@ -30,10 +44,21 @@ Time_list new_list() {
     assert(l != NULL);
 
     l->head = NULL;
-    l->tail = NULL;
+	l->tail = NULL;
     l->length = 0;
 
     return l;
+}
+
+F_Time_list new_f_list(int max) {
+	F_Time_list l = malloc(sizeof(f_time_list));
+	assert(l != NULL);
+
+	l->head = l->tail = NULL;
+	l->fast = l->slow = NULL;
+	l->length = 0;
+	l->max = max;
+	l->sum = 0;
 }
 
 void destroy(Time_list l) {
@@ -43,7 +68,20 @@ void destroy(Time_list l) {
     while (cur != NULL) {
         prev = cur;
         cur = prev->next;
-        free(prev);
+        destroy_time(prev);
+    }
+
+    free(l);
+}
+
+void f_destroy(F_Time_list l) {
+    Time cur = l->head;
+    Time prev = NULL;
+
+    while (cur != NULL) {
+        prev = cur;
+        cur = prev->next;
+        destroy_time(prev);
     }
 
     free(l);
@@ -53,7 +91,7 @@ Time create_time(char scramble[], int ms) {
     Time t = malloc(sizeof(time));
     assert(t != NULL);
 
-    memcpy((void *)t->scramble, (void *)scramble, 60);
+    memcpy((void *)t->scramble, (void *)scramble, SCRAMBLE_LENGTH);
     t->ms = ms;
     t->plus_two = 0;
     t->dnf = 0;
@@ -68,12 +106,12 @@ Time create_time_all(char scramble[], int ms, int plus_two, int dnf,
     Time t = malloc(sizeof(time));
     assert(t != NULL);
 
-    memcpy((void *)t->scramble, (void *)scramble, 60);
+    memcpy((void *)t->scramble, (void *)scramble, SCRAMBLE_LENGTH);
     t->ms = ms;
     t->plus_two = plus_two;
     t->dnf = dnf;
     if (comment != NULL) {
-        memcpy((void *)t->comment, (void *)comment, 100);
+        memcpy((void *)t->comment, (void *)comment, COMMENT_LENGTH);
     } else {
         t->comment = NULL;
     }
@@ -82,14 +120,17 @@ Time create_time_all(char scramble[], int ms, int plus_two, int dnf,
     return t;
 }
 
+void destroy_time(Time t) {
+	if (t->comment != NULL) {
+		free(t->comment);
+	}
+	free(t);
+}
+
 void append(Time_list l, Time t) {
-    if (l->tail == NULL) {
+    if (l->length == 0) {
         l->head = t;
         l->tail = t;
-    } else if (l->head == l->tail) {
-        l->tail = t;
-        l->head->next = t;
-        t->prev = l->head;
     } else {
         l->tail->next = t;
         t->prev = l->tail;
@@ -99,16 +140,91 @@ void append(Time_list l, Time t) {
     l->length++;
 }
 
+void f_append(F_Time_list l, Time t) {
+	if (l->length == 0) {
+		l->head = t;
+		l->tail = t;
+
+		l->fast = t;
+		l->slow = t;
+		l->sum = t->ms;
+
+		l->length++;
+	} else if (l->length < l->max) {
+		l->tail = t;
+		l->head->next = t;
+		t->prev = l->head;
+	
+		if (t->ms < l->fast->ms) {
+			l->fast = t;
+		} else if (t->ms > l->slow->ms) {
+			l->slow = t;
+		}
+		l->sum += t->ms;
+
+		l->length++;
+	} else if (l->length == l->max) {
+		// Add the new node on the tail
+		l->tail->next = t;
+		t->prev = l->tail;
+		l->tail = t;
+		l->sum += t->ms;
+
+		// Remove the old node from the head
+		Time old = l->head;
+		l->sum -= old->ms;
+		l->head = old->next;
+		old->next->prev = NULL;
+	
+		// Recalculate fast and slow
+		if (l->fast == old) {
+			f_update_fast(l);
+		} else if (l->slow == old) {
+			f_update_slow(l);
+		} else {
+			if (t->ms < l->fast->ms) {
+				l->fast = t;
+			} else if (t->ms > l->slow->ms) {
+				l->slow = t;
+			}
+		}	
+	}
+}
+
+void f_update_fast(F_Time_list l) {
+	Time cur = l->head;
+	l->fast->ms = INFINITY;
+	while (cur != NULL) {
+		if (cur->ms < l->fast->ms) {
+			l->fast = cur;
+		}
+		cur = cur->next;
+	}
+}
+
+void f_update_slow(F_Time_list l) {
+	Time cur = l->head;
+	l->slow->ms = 0;
+	while (cur != NULL) {
+		if (cur->ms > l->fast->ms) {
+			l->slow = cur;
+		}
+		cur = cur->next;
+	}
+}
+
 int contains(Time_list l, Time t) {
     Time cur = l->head;
     while (cur != NULL) {
         // Only need to check the scramble, since it is almost certainly unique
-        if (strcmp(t->scramble, cur->scramble) == 0) {
+        if (strncmp(t->scramble, cur->scramble, SCRAMBLE_LENGTH) == 0) {
             return TRUE;
         }
 
         cur = cur->next;
     }
+
+	return FALSE;
 }
 
 int tl_length(Time_list l) {
@@ -116,8 +232,14 @@ int tl_length(Time_list l) {
 }
 
 Time get_time(Time_list l, int index) {
-    // TODO
-    return NULL;
+    assert(index < l->length);
+    Time cur = l->head;
+
+    for (int i = 0; i < index; i++) {
+        cur = cur->next;
+    }
+
+	return cur;
 }
 
 Time get_head(Time_list l) {
@@ -129,8 +251,17 @@ Time get_tail(Time_list l) {
 }
 
 Time delete_time(Time_list l, int index) {
-    // TODO
-    return NULL;
+    assert(index < l->length);
+    Time cur = l->head;
+
+    for (int i = 0; i < index; i++) {
+        cur = cur->next;
+    }
+ 
+	cur->prev->next = cur->next;
+	cur->next->prev = cur->prev;
+	destroy_time(cur);
+	l->length--;
 }
 
 char* get_scramble(Time t) {
@@ -150,63 +281,48 @@ char* get_comment(Time t) {
 }
 
 void change_plus_two(Time_list l) {
-    if (l->tail->plus_two == 0) {
-        l->tail->plus_two = 1;
-    } else {
-        l->tail->plus_two = 0;
-    }
+	l->tail->plus_two = !l->tail->plus_two;
+	l->tail->ms += 2000;
 }
 
 void change_dnf(Time_list l) {
-    if (l->tail->dnf == 0) {
-        l->tail->dnf = 1;
-    } else {
-        l->tail->dnf = 0;
-    }
+	l->tail->dnf = !l->tail->dnf;
 }
 
 void change_plus_two_at(Time_list l, int index) {
-    assert(index <= l->length);
+    assert(index < l->length);
     Time cur = l->head;
 
-    for (int y = 1; y <= index; y++) {
+    for (int i = 0; i < index; i++) {
         cur = cur->next;
     }
     
-    if (cur->plus_two == 0) {
-        cur->plus_two = 1;
-    } else {
-        cur->plus_two = 0;
-    }
+	cur->plus_two = !cur->plus_two;
+	cur->ms += 2000;
 }
 
 void change_dnf_at(Time_list l, int index) {
-    assert(index <= l->length);
+    assert(index < l->length);
     Time cur = l->head;
 
-    for (int y = 1; y <= index; y++) {
+    for (int i = 0; i <= index; i++) {
         cur = cur->next;
     }
     
-    if (cur->dnf == 0) {
-        cur->dnf = 1;
-    } else {
-        cur->dnf = 0;
-    }
+	cur->dnf = !cur->dnf;
 }
 
-void print_up(WINDOW* w, Time_list l, int num) {
-    assert(num <= l->length);
+void print_up(WINDOW* w, Time_list l) {
     Time cur = l->head;
     float time;
 
-    for (int y = 1; y <= num; y++) {
+    for (int y = 1; y <= l->length; y++) {
         time = ((float)(cur->ms))/1000;
 
         if (cur->dnf) {
             mvwprintw(w, y, 2, "DNF  ");
         } else if (cur->plus_two) {
-            mvwprintw(w, y, 2, "%.2f+", time+2);
+            mvwprintw(w, y, 2, "%.2f+", time);
         } else {
             mvwprintw(w, y, 2, "%.2f ", time);
         }
@@ -215,8 +331,14 @@ void print_up(WINDOW* w, Time_list l, int num) {
     }
 }
 
+void print_up_stats(WINDOW* w, F_Time_list l, char* label, int y) {
+	if (f_average(l) < INFINITY) {
+		mvwprintw(w, y, 2, "%s %.2f ", label, f_average(l)/1000);
+	}
+}
+
 void print_down(WINDOW* w, Time_list l, int num) {
-    assert(num <= l->length);
+    assert(num < l->length);
     Time cur = l->tail;
     float time;
 
@@ -226,7 +348,7 @@ void print_down(WINDOW* w, Time_list l, int num) {
         if (cur->dnf) {
             mvwprintw(w, y, 2, "DNF  ");
         } else if (cur->plus_two) {
-            mvwprintw(w, y, 2, "%.2f+", time+2);
+            mvwprintw(w, y, 2, "%.2f+", time);
         } else {
             mvwprintw(w, y, 2, "%.2f", time);
         }
@@ -235,105 +357,58 @@ void print_down(WINDOW* w, Time_list l, int num) {
     }
 }
 
-void calculate_ao100(Time t, Time_list ao100) {
+float f_average(F_Time_list l) {
+	if (l->length != l->max) {
+		return INFINITY;
+	} else if (l->max < 4) {
+		return (float)(l->sum)/l->max;
+	} else {
+		return (float)(l->sum - l->fast->ms - l->slow->ms)/l->max;
+	}
 }
 
-void calculate_ao12(Time t, Time_list ao12) {
+void calculate_average(F_Time_list recent, F_Time_list best) {
+	if (f_average(recent) < f_average(best)) {
+		Time cur = recent->head;
+		while (cur != NULL) {
+			f_append(best, cur);
+			cur = cur->next;
+		}
+	}
 }
 
-void calculate_ao5(Time t, Time_list ao5) {
-/*    Time new;
-
-    if (ao5->length == 0) {
-        for (int i = 0; i < 5; i++) {
-            new = create_time_all(t->scramble, t->ms, t->plus_two, t->dnf,
-                                  t->comment);
-            append(ao5, new);
-            t = t->prev;
-        }
-    } else {
-        // TODO calculate ao5 for original and new and compare
-    }*/
-}
-
-void calculate_best(Time t, Time_list best) {
-    if (best->length == 0) {
-        Time new = create_time_all(t->scramble, t->ms, t->plus_two, 
-                                   t->dnf, t->comment);
-        append(best, new);
-    } else {
-        Time old = best->head;
-
-        if (old->dnf == 1 && t->dnf == 0) {
-            copy_time(t, old);
-        } else if (t->dnf == 0 && t->ms+2000*t->plus_two < 
-                   old->ms+2*old->plus_two) {
-            copy_time(t, old);
-        }
-    }
-}
-
-void calculate_ao100_all(Time_list l, Time_list ao100){
-    Time cur = l->head;
-    for (int i = 0; i < 99; i++) {
-        cur = cur->next;
-    }
-
-    while (cur != NULL) {
-        calculate_ao100(cur, ao100);
-        cur = cur->next;
-    }
-}
-
-void calculate_ao12_all(Time_list l, Time_list ao12){
-    Time cur = l->head;
-    for (int i = 0; i < 11; i++) {
-        cur = cur->next;
-    }
-
-    while (cur != NULL) {
-        calculate_ao12(cur, ao12);
-        cur = cur->next;
-    }
-}
-
-void calculate_ao5_all(Time_list l, Time_list ao5){
-    Time cur = l->head;
-    for (int i = 0; i < 4; i++) {
-        cur = cur->next;
-    }
-
-    while (cur != NULL) {
-        calculate_ao5(cur, ao5);
-        cur = cur->next;
-    }
-}
-
-void calculate_best_all(Time_list l, Time_list best) {
-    Time cur = l->head;
-
-    //delete_time(l, 0);
-    // Workaround until delete is written
-    destroy(best);
-    best = new_list();
-    while (cur != NULL) {
-        calculate_best(cur, best);
-        cur = cur->next;
-    }
+void calculate_average_all(Time_list l, F_Time_list best) {
+	// TODO
 }
 
 /*
  * Copy a single time from one node to another
  */
 void copy_time(Time source, Time dest) {
-    memcpy((void*)dest->scramble, (void*)source->scramble, 60);
+    memcpy((void*)dest->scramble, (void*)source->scramble, SCRAMBLE_LENGTH);
     dest->ms = source->ms;
     dest->plus_two = source->plus_two;
     dest->dnf = source->dnf;
     if (source->comment != NULL) {
-        memcpy((void*)dest->comment, (void*)source->comment, 100);
+        memcpy((void*)dest->comment, (void*)source->comment, COMMENT_LENGTH);
     } else {
-        free(dest->comment);
-        dest->comment = NULL;
+		if (dest->comment != NULL) {
+			free(dest->comment);
+			dest->comment = NULL;
+		}
     }
 }
+
+/*
+ * Copy a fixed list
+ */
+/*void f_copy_list(F_Time_list source, F_Time_list dest) {
+	Time st = source->head;
+	Time dt = dest->head;
+
+	for (int i = 0; i < source->max; i++) {
+		copy_time(st, dt);
+		st = st->next;
+		dt = dt->next;
+	}
+}*/
