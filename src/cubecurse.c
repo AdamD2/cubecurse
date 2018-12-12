@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
 
     int y_res[6] = {3, 3, mid_y, mid_y, mid_y, 4};
     int x_res[6] = {parent_x, parent_x, 15, 
-                    parent_x-15-29, 29, parent_x};
+                    parent_x-15-33, 33, parent_x};
 
     int mid_pos = y_res[TITLE]+y_res[SCRAMBLE];
 
@@ -319,7 +319,7 @@ int stop_timer(char cur_scramble[], WINDOW* scramble, WINDOW* history,
     Time t = create_time(cur_scramble, msec);
     append(time_data, t);
 	for (int i = 0; i < PB_NUM; i++) {
-		f_append(recent[i], t);
+		f_append(recent[i], create_time(cur_scramble, msec));
 	}
     print_time_data(history, time_data, y);
 

@@ -8,7 +8,7 @@
 // Local functions
 void f_update_fast(F_Time_list l);
 void f_update_slow(F_Time_list l);
-void copy_time(Time source, Time dest);
+Time clone_time(Time source);
 void f_copy_list(F_Time_list source, F_Time_list dest);
 
 // Structs
@@ -163,6 +163,17 @@ void f_append(F_Time_list l, Time t) {
 		l->sum += t->ms;
 
 		l->length++;
+	} else if (l->max == 1) {
+		Time old = l->head;
+
+		l->head = t;
+		l->tail = t;
+
+		l->fast = t;
+		l->slow = t;
+		l->sum = t->ms;
+
+		destroy_time(old);
 	} else if (l->length == l->max) {
 		// Add the new node on the tail
 		l->tail->next = t;
@@ -188,6 +199,8 @@ void f_append(F_Time_list l, Time t) {
 				l->slow = t;
 			}
 		}	
+
+		destroy_time(old);
 	}
 }
 
@@ -371,7 +384,7 @@ void calculate_average(F_Time_list recent, F_Time_list best) {
 	if (f_average(recent) < f_average(best)) {
 		Time cur = recent->head;
 		while (cur != NULL) {
-			f_append(best, cur);
+			f_append(best, clone_time(cur));
 			cur = cur->next;
 		}
 	}
@@ -382,9 +395,11 @@ void calculate_average_all(Time_list l, F_Time_list best) {
 }
 
 /*
- * Copy a single time from one node to another
+ * Return a copy of the time passed in
  */
-void copy_time(Time source, Time dest) {
+Time clone_time(Time source) {
+	Time dest = create_time("", 0);
+
     memcpy((void*)dest->scramble, (void*)source->scramble, SCRAMBLE_LENGTH);
     dest->ms = source->ms;
     dest->plus_two = source->plus_two;
@@ -397,6 +412,8 @@ void copy_time(Time source, Time dest) {
 			dest->comment = NULL;
 		}
     }
+
+	return dest;
 }
 
 /*
