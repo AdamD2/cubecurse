@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
 
     int y_res[6] = {3, 3, mid_y, mid_y, mid_y, 4};
     int x_res[6] = {parent_x, parent_x, 15, 
-                    parent_x-15-29, 29, parent_x};
+                    parent_x-15-33, 33, parent_x};
 
     int mid_pos = y_res[TITLE]+y_res[SCRAMBLE];
 
@@ -52,8 +52,9 @@ int main(int argc, char* argv[]) {
 
     // Time data setup
     Time_list time_data = time_data_setup();
-    Time_list pbs[4];
-    pb_setup(pbs);
+    F_Time_list pbs[PB_NUM];
+	F_Time_list recent[PB_NUM];
+	pb_recent_setup(pbs, recent);
 
     // Initial printing
     add_boxes();
@@ -65,7 +66,7 @@ int main(int argc, char* argv[]) {
     refresh_windows();
 
     // Main loop
-    main_loop(x_res, y_res, x_pos, y_pos, ws, time_data, pbs, cur_scramble);
+    main_loop(x_res, y_res, x_pos, y_pos, ws, time_data, pbs, recent, cur_scramble);
 
     // Finish
     delete_windows();
@@ -93,8 +94,8 @@ void print_time_data(WINDOW* history, Time_list time_data, int y) {
 
     if (l == 0) {
         // Do nothing
-    } else if (l <= y) {
-        print_up(history, time_data, tl_length(time_data));
+    } else if (l <= y-2) {
+        print_up(history, time_data);
     } else {
         print_down(history, time_data, y-2);
     }
@@ -103,40 +104,50 @@ void print_time_data(WINDOW* history, Time_list time_data, int y) {
 /*
  * Print the stats 
  */
-void print_stats(WINDOW* stats, Time_list pbs[]) {
+void print_stats(WINDOW* stats, F_Time_list pbs[], F_Time_list recent[]) {
     // Print best time
-    print_up(stats, pbs[BEST], tl_length(pbs[BEST]));
-
-    // TODO print everything else
+    print_up_stats(stats, pbs[AO1], "Best time:", 1);
+	print_up_stats(stats, recent[AO1], "Current time:", 2);
+	print_up_stats(stats, pbs[AO5], "Best average of 5:", 3);
+	print_up_stats(stats, recent[AO5], "Current average of 5:", 4);
+	print_up_stats(stats, pbs[AO12], "Best average of 12:", 5);
+	print_up_stats(stats, recent[AO12], "Current average of 12:", 6);
+	print_up_stats(stats, pbs[AO100], "Best average of 100:", 7);
+	print_up_stats(stats, recent[AO100], "Current average of 100:", 8);
 }
 
 /*
  * Load in previous pbs or create empty lists for them
  */
-void pb_setup(Time_list pbs[]) {
-    pbs[BEST] = new_list();
-    pbs[AO5] = new_list();
-    pbs[AO12] = new_list();
-    pbs[AO100] = new_list();
+void pb_recent_setup(F_Time_list pbs[], F_Time_list recent[]) {
+    pbs[AO1]		= new_f_list(1);
+    pbs[AO5]		= new_f_list(5);
+    pbs[AO12]		= new_f_list(12);
+    pbs[AO100]		= new_f_list(100);
+	recent[AO1]		= new_f_list(1);
+	recent[AO5]		= new_f_list(5);
+	recent[AO12]	= new_f_list(12);
+	recent[AO100]	= new_f_list(100);
 
-    // TODO load from file
+    // TODO load from file or calculate
 }
 
 /*
  * Update stats based on the most recent recorded time and display them in the
  * stats window
  */
-void calculate_stats(WINDOW* stats, Time_list time_data, Time_list pbs[]) {
+void calculate_stats(Time_list time_data, F_Time_list pbs[],
+					 F_Time_list recent[]) {
     int len = tl_length(time_data);
 
     if (len >= 1) {
-        calculate_best(get_tail(time_data), pbs[BEST]);
+        calculate_average(recent[AO1], pbs[AO1]);
         if (len >= 5) {
-            calculate_ao5(get_tail(time_data), pbs[AO5]);
+            calculate_average(recent[AO5], pbs[AO5]);
             if (len >= 12) {
-                calculate_ao12(get_tail(time_data), pbs[AO12]);
+                calculate_average(recent[AO12], pbs[AO12]);
                 if (len >= 100) {
-                    calculate_ao100(get_tail(time_data), pbs[AO100]);
+                    calculate_average(recent[AO100], pbs[AO100]);
                 }
             }
         }
@@ -146,43 +157,10 @@ void calculate_stats(WINDOW* stats, Time_list time_data, Time_list pbs[]) {
 /*
  * Update stats based on all recorded times and display them in the stats window
  */
-void calculate_stats_all(WINDOW* stats, Time_list time_data, Time_list pbs[]) {
+void calculate_stats_all(Time_list time_data, F_Time_list pbs[],
+						 F_Time_list recent[]) {
     int len = tl_length(time_data);
-
-    if (len >= 1) {
-        calculate_best_all(time_data, pbs[BEST]);
-        if (len >= 5) {
-            calculate_ao5_all(time_data, pbs[AO5]);
-            if (len >= 12) {
-                calculate_ao12_all(time_data, pbs[AO12]);
-                if (len >= 100) {
-                    calculate_ao100_all(time_data, pbs[AO100]);
-                }
-            }
-        }
-    }   
-}
-
-/*
- * Take an array of chars and put in a 3x3x3 scramble
- * Pre: cur_scramble is 60 chars long
- * Post: cur_scramble contains a 20 move scramble
- */
-void generate_scramble(char cur_scramble[]) {
-    int index = 0;
-    int rand_num = 0, prev_rand;
-    for (int i = 0; i < 20; i++) {
-        prev_rand = rand_num;
-        rand_num = rand() % 18;
-        while (rand_num-(rand_num%3) == prev_rand-(prev_rand%3)) {
-            rand_num = rand() % 18;
-        }
-        strcpy(&cur_scramble[index], scramble_options[rand_num]);
-        index += strlen(scramble_options[rand_num]);
-    }
-    for (index; index < 60; index++) {
-        strcpy(&cur_scramble[index], " ");
-    }
+	// TODO
 }
 
 /*
@@ -190,16 +168,16 @@ void generate_scramble(char cur_scramble[]) {
  */
 void print_controls(WINDOW* controls, int y_res, int x_res) {
 	int y = 1;
-	int x = 1;
+	int x = 2;
 	int printed = 0;
 	for (int i = 0; i < control_num; i++) {
 		if (x + CONTROL_LEN < x_res) {
-			mvwprintw(controls, y, x, "%-4s %-17s", control_button[i],
+			mvwprintw(controls, y, x, "%-4s%-17s", control_button[i],
 					  control_exp[i]);
 			x += CONTROL_LEN;
 		} else {
 			y++;
-			x = 1;
+			x = 2;
 			if (y > y_res) {
 				break;
 			}
@@ -211,7 +189,8 @@ void print_controls(WINDOW* controls, int y_res, int x_res) {
  * Main loop of the program
  */
 void main_loop(int x_res[], int y_res[], int x_pos[], int y_pos[], WINDOW* ws[],
-			   Time_list time_data, Time_list pbs[], char cur_scramble[]) {
+			   Time_list time_data, F_Time_list pbs[], F_Time_list recent[],
+			   char cur_scramble[]) {
     // Resizing variables
     int parent_y, parent_x, new_y, new_x;
     getmaxyx(stdscr, parent_y, parent_x);
@@ -247,21 +226,21 @@ void main_loop(int x_res[], int y_res[], int x_pos[], int y_pos[], WINDOW* ws[],
         } else if (c == ' ' && timing == TRUE) {
 			// End the timer
             timing = stop_timer(cur_scramble, ws[SCRAMBLE], ws[HISTORY], 
-								time_data, msec, y_res[HISTORY]);
-            calculate_stats(ws[STATS], time_data, pbs);
-            print_stats(ws[STATS], pbs);
+								time_data, recent, msec, y_res[HISTORY]);
+            calculate_stats(time_data, pbs, recent);
+            print_stats(ws[STATS], pbs, recent);
         } else if (c == 'f') {
 			// Set DNF for the selected time
             change_dnf(time_data);
             print_time_data(ws[HISTORY], time_data, y_res[HISTORY]);
-            calculate_best_all(time_data, pbs[BEST]);
-            print_stats(ws[STATS], pbs);
+            calculate_stats_all(time_data, pbs, recent);
+            print_stats(ws[STATS], pbs, recent);
         } else if (c == '+') {
 			// Set +2 for the selected time
             change_plus_two(time_data);
             print_time_data(ws[HISTORY], time_data, y_res[HISTORY]);
-            calculate_best_all(time_data, pbs[BEST]);
-            print_stats(ws[STATS], pbs);
+            calculate_stats_all(time_data, pbs, recent);
+            print_stats(ws[STATS], pbs, recent);
         }
 
 		// Update the timer and print it
@@ -314,12 +293,16 @@ void resize(int new_x, int new_y, int x_res[], int y_res[], int x_pos[],
  * Stop the timer
  */
 int stop_timer(char cur_scramble[], WINDOW* scramble, WINDOW* history,
-               Time_list time_data, int msec, int y) {
-    generate_scramble(cur_scramble);
-    mvwprintw(scramble, 1, 2, "Scramble: %s", cur_scramble);
+               Time_list time_data, F_Time_list recent[], int msec, int y) {
     Time t = create_time(cur_scramble, msec);
     append(time_data, t);
+	for (int i = 0; i < PB_NUM; i++) {
+		f_append(recent[i], create_time(cur_scramble, msec));
+	}
     print_time_data(history, time_data, y);
+
+    generate_scramble(cur_scramble);
+    mvwprintw(scramble, 1, 2, "Scramble: %s", cur_scramble);
     return FALSE;
 }
 
