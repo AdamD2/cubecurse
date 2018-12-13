@@ -136,7 +136,7 @@ void pb_recent_setup(F_Time_list pbs[], F_Time_list recent[]) {
  * Update stats based on the most recent recorded time and display them in the
  * stats window
  */
-void calculate_stats(WINDOW* stats, Time_list time_data, F_Time_list pbs[],
+void calculate_stats(Time_list time_data, F_Time_list pbs[],
 					 F_Time_list recent[]) {
     int len = tl_length(time_data);
 
@@ -157,32 +157,10 @@ void calculate_stats(WINDOW* stats, Time_list time_data, F_Time_list pbs[],
 /*
  * Update stats based on all recorded times and display them in the stats window
  */
-void calculate_stats_all(WINDOW* stats, Time_list time_data, F_Time_list pbs[],
+void calculate_stats_all(Time_list time_data, F_Time_list pbs[],
 						 F_Time_list recent[]) {
     int len = tl_length(time_data);
 	// TODO
-}
-
-/*
- * Take an array of chars and put in a 3x3x3 scramble
- * Pre: cur_scramble is 60 chars long
- * Post: cur_scramble contains a 20 move scramble
- */
-void generate_scramble(char cur_scramble[]) {
-    int index = 0;
-    int rand_num = 0, prev_rand;
-    for (int i = 0; i < 20; i++) {
-        prev_rand = rand_num;
-        rand_num = rand() % 18;
-        while (rand_num-(rand_num%3) == prev_rand-(prev_rand%3)) {
-            rand_num = rand() % 18;
-        }
-        strcpy(&cur_scramble[index], scramble_options[rand_num]);
-        index += strlen(scramble_options[rand_num]);
-    }
-    for (index; index < 60; index++) {
-        strcpy(&cur_scramble[index], " ");
-    }
 }
 
 /*
@@ -249,19 +227,19 @@ void main_loop(int x_res[], int y_res[], int x_pos[], int y_pos[], WINDOW* ws[],
 			// End the timer
             timing = stop_timer(cur_scramble, ws[SCRAMBLE], ws[HISTORY], 
 								time_data, recent, msec, y_res[HISTORY]);
-            calculate_stats(ws[STATS], time_data, pbs, recent);
+            calculate_stats(time_data, pbs, recent);
             print_stats(ws[STATS], pbs, recent);
         } else if (c == 'f') {
 			// Set DNF for the selected time
             change_dnf(time_data);
             print_time_data(ws[HISTORY], time_data, y_res[HISTORY]);
-            calculate_average_all(time_data, pbs[AO1]);
+            calculate_stats_all(time_data, pbs, recent);
             print_stats(ws[STATS], pbs, recent);
         } else if (c == '+') {
 			// Set +2 for the selected time
             change_plus_two(time_data);
             print_time_data(ws[HISTORY], time_data, y_res[HISTORY]);
-            calculate_average_all(time_data, pbs[AO1]);
+            calculate_stats_all(time_data, pbs, recent);
             print_stats(ws[STATS], pbs, recent);
         }
 

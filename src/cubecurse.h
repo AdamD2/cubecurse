@@ -13,6 +13,7 @@
 #include <string.h>
 #include <time.h>
 #include "time_list/Time_list.h"
+#include "scramble/Scramble.h"
 
 // Definitions
 // Color
@@ -73,9 +74,6 @@
                          delwin(ws[CONTROLS])
 
 // Global variables
-char* scramble_options[18] = {"F ", "F' ", "F2 ", "B ", "B' ", "B2 ",
-                              "L ", "L' ", "L2 ", "R ", "R' ", "R2 ",
-                              "U ", "U' ", "U2 ", "D ", "D' ", "D2 "};
 char* title_string = "Cubecurse v0.1";
 char* control_button[7] = {"q", "n", "SPC", "U/D", "d", "f", "+"};
 char* control_exp[7] = {"Quit", "New Scramble", "Start/Stop Timer", 
@@ -87,11 +85,10 @@ Time_list time_data_setup();
 void print_time_data(WINDOW* history, Time_list time_data, int y);
 void print_stats(WINDOW* stats, F_Time_list pbs[], F_Time_list recent[]);
 void pb_recent_setup(F_Time_list pbs[], F_Time_list recent[]);
-void calculate_stats(WINDOW* stats, Time_list time_data, F_Time_list pbs[],
+void calculate_stats(Time_list time_data, F_Time_list pbs[],
 					 F_Time_list recent[]);
-void calculate_stats_all(WINDOW* stats, Time_list time_data, F_Time_list pbs[],
+void calculate_stats_all(Time_list time_data, F_Time_list pbs[],
 						 F_Time_list recent[]);
-void generate_scramble(char cur_scramble[]);
 void print_controls(WINDOW* controls, int y_res, int x_res);
 void main_loop(int x_res[], int y_res[], int x_pos[], int y_pos[], WINDOW* ws[],
 			   Time_list time_data, F_Time_list pbs[], F_Time_list recent[],

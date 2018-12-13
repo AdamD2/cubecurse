@@ -295,7 +295,11 @@ char* get_comment(Time t) {
 
 void change_plus_two(Time_list l) {
 	l->tail->plus_two = !l->tail->plus_two;
-	l->tail->ms += 2000;
+	if (l->tail->plus_two) {
+		l->tail->ms += 2000;
+	} else {
+		l->tail->ms -= 2000;
+	}
 }
 
 void change_dnf(Time_list l) {
@@ -376,7 +380,7 @@ float f_average(F_Time_list l) {
 	} else if (l->max < 4) {
 		return (float)(l->sum)/l->max;
 	} else {
-		return (float)(l->sum - l->fast->ms - l->slow->ms)/l->max;
+		return (float)(l->sum - l->fast->ms - l->slow->ms)/(l->max-2);
 	}
 }
 
